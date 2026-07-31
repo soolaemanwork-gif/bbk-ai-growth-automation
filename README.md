@@ -1,13 +1,14 @@
-# BBKitchen (bukanbarukitchen.com) — Automated Organic Growth & AI-Driven Inventory Pipeline
+# BBKitchen — Automated Organic Growth & AI-Driven Inventory Pipeline
 
 > A production workflow that transforms fragmented inventory from independent Telegram supplier groups into structured, SEO-ready WooCommerce product listings.
 
 ## Project Overview
 
-BBKitchen is an organic growth and inventory automation system built for a used commercial kitchen equipment business operating without its own warehouse inventory.
+**BBKitchen (Bukan Baru Kitchen)** is a used commercial kitchen equipment business operating through **bukanbarukitchen.com**.
 
-The business sources products through a network of independent warehouse owners and administrators who publish available equipment inside private Telegram groups.
+BBKitchen is supported by an organic growth and inventory automation system built to manage fragmented inventory without owning the upstream warehouse inventory.
 
+Products are sourced through a network of independent warehouse owners and administrators who publish available equipment inside private Telegram groups.
 This creates an unusual operational environment:
 
 - Inventory is controlled by independent suppliers.
@@ -15,10 +16,10 @@ This creates an unusual operational environment:
 - Product specifications are inconsistent.
 - Product photos arrive in different formats and groupings.
 - Availability and sold status are communicated differently.
-- The same marketer competes with many other independent resellers for the same inventory.
+- Multiple independent marketers can compete to sell inventory from the same supplier network.
 - New inventory needs to become searchable and commercially usable quickly.
 
-Instead of manually copying products from Telegram into a website, I built an automation pipeline that converts fragmented supplier data into a centralized product catalog.
+Instead of manually copying products from Telegram into an e-commerce catalog, I built an automation pipeline that converts fragmented supplier data into structured product records and publication-ready assets.
 
 The system combines:
 
@@ -31,27 +32,27 @@ OpenAI API
 WordPress / WooCommerce
 ```
 
-The project was developed using an AI-intensive implementation workflow. My role focused on defining the business problem, designing the system architecture and workflow logic, specifying AI behavior and constraints, testing the system end-to-end, debugging failures, and iterating based on production behavior.
-
 ---
 
 # The Problem
 
-The original workflow looked roughly like this:
+The upstream inventory environment looks conceptually like this:
 
 ```text
-Independent Warehouse A ─┐
-Independent Warehouse B ─┤
-Independent Warehouse C ─┤
-Independent Warehouse D ─┤
-Independent Warehouse E ─┼──> Telegram ──> Manual Reseller Workflow
-Independent Warehouse F ─┤
-Independent Warehouse G ─┤
-Independent Warehouse H ─┤
-Additional Sources ──────┘
+Independent Supplier A ─┐
+Independent Supplier B ─┤
+Independent Supplier C ─┤
+Independent Supplier D ─┤
+Independent Supplier E ─┼──> Telegram ──> Resellers / Marketers
+Independent Supplier F ─┤
+Independent Supplier G ─┤
+Independent Supplier H ─┤
+Additional Sources ─────┘
 ```
 
-Each source could describe the same type of equipment differently.
+The business does not control how those suppliers structure their data.
+
+The same type of product can therefore appear in very different formats.
 
 Example conceptual inputs:
 
@@ -72,45 +73,45 @@ Source D:
 SOLD
 ```
 
-At larger inventory volumes, manually turning these messages into structured website listings creates several bottlenecks:
+At larger inventory volumes, manually transforming these messages into structured website listings creates a long operational chain:
 
 ```text
-Telegram monitoring
-        ↓
-Copy product information
-        ↓
-Interpret inconsistent captions
-        ↓
+Monitor Telegram
+      ↓
+Interpret captions
+      ↓
+Identify product units
+      ↓
 Download images
-        ↓
+      ↓
 Rename images
-        ↓
+      ↓
 Compress images
-        ↓
-Add watermark
-        ↓
+      ↓
+Apply watermark
+      ↓
 Determine category
-        ↓
+      ↓
 Write product title
-        ↓
-Write SEO content
-        ↓
-Create metadata
-        ↓
-Upload images
-        ↓
+      ↓
+Write product content
+      ↓
+Generate SEO metadata
+      ↓
+Upload media
+      ↓
 Publish to WooCommerce
-        ↓
-Track product status
+      ↓
+Track publication state
 ```
 
-The objective was to convert this fragmented process into a repeatable pipeline.
+The objective was to turn this fragmented process into a repeatable growth workflow.
 
 ---
 
-# Solution
+# The Solution
 
-BBKitchen uses a staged automation architecture.
+BBKitchen uses a staged automation architecture:
 
 ```text
 Telegram Supplier Groups
@@ -155,21 +156,20 @@ Telegram Supplier Groups
    MASTER_INVENTORY
 ```
 
-The architecture intentionally separates deterministic operations from semantic AI processing.
+The architecture intentionally separates deterministic automation from semantic AI processing.
 
 ```text
 DETERMINISTIC CODE
 
-Fetch
-Parse
-Deduplicate
-Generate SKU
+Fetch source data
+Parse messages
+Prevent duplicates
+Generate SKUs
 Process images
-Move files
-Manage state
+Manage pipeline state
 Call APIs
-Publish
-Archive
+Publish products
+Archive files
 
 
 AI
@@ -177,22 +177,28 @@ AI
 Interpret inconsistent captions
 Normalize product information
 Classify products
-Generate structured commercial content
+Generate commercial content
 Generate SEO metadata
 Generate image metadata
 ```
 
 ---
 
-# System Architecture
+# Architecture
 
-The system is divided into four main layers.
+The complete architecture documentation is available here:
 
-## 1. Source Ingestion
+[`System Architecture`](./diagrams/system-architecture.md)
+
+The system is divided into four primary operational layers.
+
+---
+
+## 1. Telegram Ingestion
 
 Python retrieves inventory messages and images from multiple Telegram sources.
 
-The ingestion workflow supports date-based extraction and stores each source independently.
+The extraction workflow supports date-based retrieval and stores source exports independently.
 
 ```text
 Telegram API
@@ -205,13 +211,15 @@ telethon_fetch.py
      +----> source images
 ```
 
-The parser then groups related images and captions into inventory units.
+The parser then converts those exports into structured inventory units.
 
-Duplicate source messages are prevented from entering the database by comparing Telegram message references against existing records.
+Existing Telegram message references stored in the operational database are used to prevent duplicate ingestion.
 
 Source:
 
-[`src/python/`](./src/python/)
+[`telethon_fetch.py`](./src/python/telethon_fetch.py)
+
+[`telegram_parser_to_gsheet.py`](./src/python/telegram_parser_to_gsheet.py)
 
 ---
 
@@ -219,11 +227,12 @@ Source:
 
 Google Sheets acts as the operational Single Source of Truth.
 
-The data model is divided into:
+The data model is separated into:
 
 ```text
 RAW_INVENTORY
       |
+      | AI normalization
       v
 MASTER_INVENTORY
 ```
@@ -264,7 +273,11 @@ SALE METADATA
 
 Full schema documentation:
 
-[`docs/data-dictionary.md`](./docs/data-dictionary.md)
+[`Data Dictionary`](./docs/workflows/data-dictionary.md)
+
+Architecture decision:
+
+[`ADR-001 — Google Sheets as the Central Operational Database`](./docs/architecture/ADR-001-google-sheets-as-central-database.md)
 
 ---
 
@@ -272,9 +285,9 @@ Full schema documentation:
 
 Unstructured Telegram captions are processed through the OpenAI API.
 
-The model is not used as an autonomous agent.
+The model is not used as an autonomous agent controlling the workflow.
 
-Instead, it operates inside a deterministic workflow with a strict JSON output contract.
+Instead, it operates inside deterministic orchestration with a predefined JSON output contract.
 
 Expected output:
 
@@ -294,7 +307,7 @@ Expected output:
 }
 ```
 
-The implementation explicitly requests:
+The implementation explicitly requests structured JSON output:
 
 ```javascript
 response_format: {
@@ -302,9 +315,9 @@ response_format: {
 }
 ```
 
-The prompt also contains operational constraints — internally referred to as the **Golden Rules** — designed to prevent unsupported product information.
+The prompt also contains operational constraints internally referred to as the **Golden Rules**.
 
-Examples include:
+These include:
 
 ```text
 Do not expose source pricing.
@@ -319,20 +332,49 @@ Do not invent materials.
 
 Do not invent product condition.
 
-Select categories from the controlled taxonomy.
+Select categories from a controlled taxonomy.
 
-Normalize product condition into controlled values.
+Normalize inconsistent product-condition terminology.
 ```
 
-This turns the LLM into a bounded transformation component rather than allowing it to control the workflow.
+This turns the LLM into a bounded transformation component rather than allowing it to control business state or pipeline execution.
 
 Source:
 
-[`src/apps-script/normalizeAndBuildMaster.gs`](./src/apps-script/normalizeAndBuildMaster.gs)
+[`normalizeAndBuildMaster.gs`](./src/apps-script/normalizeAndBuildMaster.gs)
 
 Architecture decision:
 
 [`ADR-004 — AI Output Contract and Controlled Content Generation`](./docs/architecture/ADR-004-ai-output-contract-and-controlled-generation.md)
+
+---
+
+## 4. Distribution & Feedback
+
+After normalization, products move through media synchronization and WooCommerce publishing.
+
+```text
+MASTER_INVENTORY
+       |
+       v
+PENDING_PHOTOS
+       |
+       v
+Google Drive Media Sync
+       |
+       v
+READY_TO_PUBLISH
+       |
+       v
+WooCommerce Publisher
+       |
+       v
+PUBLISHED
+```
+
+WooCommerce can then send selected product data back into the operational inventory through the implemented callback structure.
+
+This creates a foundation for downstream-to-upstream feedback.
 
 ---
 
@@ -374,7 +416,7 @@ BBK0051_3.webp
 
 SKU-based naming creates a simple relationship between product records and media assets.
 
-The Google Drive synchronization workflow later resolves those files and assigns:
+The Google Drive synchronization workflow later resolves those assets and assigns:
 
 ```text
 MAIN_IMAGE
@@ -389,21 +431,21 @@ READY_TO_PUBLISH
 
 Source:
 
-[`src/apps-script/syncDrivePhotosToMaster.gs`](./src/apps-script/syncDrivePhotosToMaster.gs)
+[`syncDrivePhotosToMaster.gs`](./src/apps-script/syncDrivePhotosToMaster.gs)
 
 ---
 
 # WooCommerce Publishing
 
-Products that reach:
+Products reaching:
 
 ```text
 READY_TO_PUBLISH
 ```
 
-are eligible for publication.
+become eligible for publication.
 
-Google Apps Script builds a structured payload containing:
+Google Apps Script builds a structured payload containing product and SEO data such as:
 
 ```text
 SKU
@@ -449,15 +491,15 @@ STATUS_PIPELINE = PUBLISHED
 
 Source:
 
-[`src/apps-script/publishMasterToWooCommerce.gs`](./src/apps-script/publishMasterToWooCommerce.gs)
+[`publishMasterToWooCommerce.gs`](./src/apps-script/publishMasterToWooCommerce.gs)
 
 ---
 
-# WooCommerce Feedback Loop
+# WooCommerce Callback
 
-The architecture also contains a callback endpoint implemented through Google Apps Script.
+The architecture contains a POST callback implemented through Google Apps Script.
 
-WooCommerce can send product sale information back to the operational inventory using the stored `PRODUCT_ID`.
+Incoming product data can be matched against the stored WooCommerce `PRODUCT_ID`.
 
 ```text
 WooCommerce
@@ -479,21 +521,21 @@ MASTER_INVENTORY
      +----> DURASI_TERJUAL
 ```
 
-The callback structure is implemented in the repository.
-
-Its presence demonstrates the architecture for downstream-to-upstream feedback, but this repository does not claim a fully verified real-time bidirectional stock synchronization system.
-
 Source:
 
-[`src/apps-script/handleStockStatusChange.gs`](./src/apps-script/handleStockStatusChange.gs)
+[`handleStockStatusChange.gs`](./src/apps-script/handleStockStatusChange.gs)
+
+The callback structure is implemented in the repository.
+
+This repository does not claim a fully verified real-time bidirectional stock synchronization system beyond what the published implementation demonstrates.
 
 ---
 
 # Resource-Aware Automation
 
-The pipeline intentionally does not attempt to process the entire inventory in one execution.
+The pipeline intentionally avoids attempting to process the entire inventory in a single execution.
 
-Different stages use different batch limits.
+Different stages use different processing limits.
 
 ```text
 Python → Google Sheets       10 rows / batch
@@ -502,7 +544,7 @@ Google Drive media sync      15 products / execution
 WooCommerce publishing        5 products / execution
 ```
 
-The objective is:
+The operating principle is:
 
 ```text
 Reliability > Maximum Single-Run Throughput
@@ -515,10 +557,10 @@ Apps Script timeout risk
 API quota pressure
 Network failure impact
 WooCommerce server load
-Failure domain size
+Failure-domain size
 ```
 
-The Python Google Sheets uploader also implements retry behavior for transient failures.
+The Python Google Sheets uploader also includes retry behavior for transient upload failures.
 
 Architecture decision:
 
@@ -528,31 +570,27 @@ Architecture decision:
 
 # Pipeline State Management
 
-Instead of introducing dedicated queue infrastructure, the system uses explicit spreadsheet states as a lightweight operational queue.
+Instead of introducing dedicated queue infrastructure, the current system uses explicit spreadsheet states as a lightweight operational queue.
 
-Example lifecycle:
+RAW processing:
 
 ```text
-RAW_INVENTORY
-
 FALSE
   |
   v
 PROCESSING
   |
-  +---- ERROR
+  +----> ERROR
   |
-  +---- SKIP
+  +----> SKIP
   |
   v
 TRUE
 ```
 
-Then:
+MASTER processing:
 
 ```text
-MASTER_INVENTORY
-
 PENDING_PHOTOS
        |
        v
@@ -562,7 +600,7 @@ READY_TO_PUBLISH
 PUBLISHED
 ```
 
-Alternative failure states include:
+Other operational states include:
 
 ```text
 NO_PHOTOS_FOUND
@@ -571,35 +609,61 @@ ERROR: <code>
 ERROR: SCRIPT FAILED
 ```
 
-This makes pipeline failures visible and allows individual stages to resume without reprocessing the entire inventory.
+This keeps pipeline state observable and allows individual stages to resume without reprocessing the entire inventory.
 
 ---
 
-# Architecture Decisions
+# Post-Publishing Archival
 
-The repository documents the major design decisions separately from the implementation.
+Once products have reached the published state, the cleanup workflow can identify their media assets using SKU-based filenames.
 
-### ADR-001 — Google Sheets as Central Operational Database
+Example:
+
+```text
+BBK0051_1.webp
+BBK0051_2.webp
+BBK0051_3.webp
+```
+
+Matching files can then be moved from the active processing directory into an archive.
+
+This keeps local processing storage focused on inventory still moving through the pipeline.
+
+Source:
+
+[`clean_files.py`](./src/python/clean_files.py)
+
+Architecture decision:
+
+[`ADR-002 — Stateless Ingestion and Post-Publishing Archival`](./docs/architecture/ADR-002-stateless-ingestion-and-archival.md)
+
+---
+
+# Architecture Decision Records
+
+Major architecture decisions are documented separately from implementation code.
+
+## ADR-001 — Central Operational Database
 
 Why Google Sheets was selected as the operational Single Source of Truth instead of introducing dedicated database infrastructure prematurely.
 
 [`Read ADR-001`](./docs/architecture/ADR-001-google-sheets-as-central-database.md)
 
-### ADR-002 — Stateless Ingestion and Post-Publishing Archival
+## ADR-002 — Stateless Ingestion & Archival
 
-Why local storage is treated as temporary processing infrastructure while pipeline state remains centralized.
+Why local storage is treated as processing infrastructure while operational pipeline state remains centralized.
 
 [`Read ADR-002`](./docs/architecture/ADR-002-stateless-ingestion-and-archival.md)
 
-### ADR-003 — Batch Throttling and Resource-Aware Automation
+## ADR-003 — Resource-Aware Batch Processing
 
-Why different pipeline stages intentionally use small processing batches.
+Why different pipeline stages intentionally use different small processing batches.
 
 [`Read ADR-003`](./docs/architecture/ADR-003-batch-throttling-and-resource-aware-automation.md)
 
-### ADR-004 — AI Output Contract and Controlled Content Generation
+## ADR-004 — Controlled AI Generation
 
-Why AI is constrained by structured output, controlled taxonomy, explicit prompt rules, and deterministic pipeline execution.
+Why AI is constrained by structured output, controlled taxonomy, explicit prompt rules, and deterministic orchestration.
 
 [`Read ADR-004`](./docs/architecture/ADR-004-ai-output-contract-and-controlled-generation.md)
 
@@ -607,25 +671,27 @@ Why AI is constrained by structured output, controlled taxonomy, explicit prompt
 
 # Production Evidence
 
-This repository includes production evidence separately from source code.
+The repository separates implementation from production evidence.
+
+Evidence is stored under:
+
+[`docs/evidence/`](./docs/evidence/README.md)
+
+This prevents production-scale claims from being presented as if they were automatically proven by source code alone.
+
+---
 
 ## Product Sitemap Scale
 
-The production WooCommerce catalog is distributed across multiple product sitemap files:
+Production sitemap evidence is documented here:
 
-- [`product-sitemap.md`](./evidence/product-sitemap.md)
-- [`product-sitemap2.md`](./evidence/product-sitemap2.md)
-- [`product-sitemap3.md`](./evidence/product-sitemap3.md)
+[`Production Sitemap Evidence`](./docs/evidence/sitemaps_separated_by_file.md)
 
-Together, these files provide evidence of a large live e-commerce catalog.
+The sitemap evidence supports:
 
-They support claims regarding:
-
-```text
-Large-scale product catalog deployment
-Thousands of product URLs exposed through sitemap infrastructure
-Production implementation beyond a prototype environment
-```
+- Large-scale product catalog deployment
+- Thousands of product URLs exposed through production sitemap infrastructure
+- Production implementation beyond a prototype environment
 
 The sitemap evidence demonstrates catalog scale.
 
@@ -633,40 +699,61 @@ It does **not**, by itself, prove that every listed product was published throug
 
 ---
 
+## Organic Search Performance
+
+Google Search Console production evidence:
+
+![Google Search Console — 12 Month Performance](./docs/evidence/gsc-performance-12-months.png)
+
+The measured 12-month period recorded:
+
+```text
+Organic impressions     24,307
+Organic clicks             883
+```
+
+These figures represent the full measured **12-month period**, not daily performance.
+
+---
+
 # Verified Project Scale
 
-Evidence available for this project supports the following scale:
+Available project evidence supports the following scale:
+
+| Metric | Verified Scale |
+|---|---:|
+| Master inventory | 2,333 SKUs |
+| Organic impressions | 24,307 / 12 months |
+| Organic clicks | 883 / 12 months |
+| Product catalog | Thousands of sitemap URLs |
+| Geo SEO targets | 183 districts |
+| Ahrefs Health Score | 67 / 100 |
+
+These metrics are intentionally presented conservatively.
+
+For example:
 
 ```text
-Master inventory        2,333 SKUs
-Organic impressions     24,307 / 12 months
-Organic clicks             883 / 12 months
-Product sitemap URLs    ~2,000+ across production sitemap evidence
-Geo SEO targets            183 districts
-Ahrefs Health Score         67 / 100
+24,307 impressions
+
+means:
+
+24,307 total impressions during the measured 12-month period
+
+NOT:
+
+24,307 impressions per day
 ```
-
-Important:
-
-```text
-24,307 impressions = total over the measured 12-month period.
-
-It is NOT a daily impression figure.
-```
-
-The repository intentionally separates verified metrics from assumptions.
 
 ---
 
 # Organic Growth Context
 
-The automation system supports a broader organic acquisition strategy.
-
 BBKitchen operates in a market where multiple independent marketers can compete to sell inventory supplied by the same warehouse network.
 
-The strategic advantage is therefore not exclusive access to inventory.
+The strategic advantage is therefore not exclusive inventory ownership.
 
-The advantage is improving:
+The opportunity is improving:
 
 ```text
 Inventory discovery
@@ -680,45 +767,33 @@ Search discoverability
 Operational scalability
 ```
 
-Instead of treating every Telegram product as an individual manual marketing task, the system turns incoming inventory into structured searchable assets.
+Instead of treating every Telegram product as an individual manual marketing task, the system converts incoming inventory into structured and searchable digital assets.
 
-This connects operations automation directly to organic growth.
+This connects workflow automation directly to organic growth.
 
 ---
 
 # My Role
 
-This project was built using an AI-intensive development workflow.
+This project was built using an **AI-intensive development workflow**.
 
-I do not position the project as evidence that every line of code was manually authored without AI assistance.
+I do not present the repository as evidence that every line of code was manually authored without AI assistance.
 
 My responsibilities included:
 
 ```text
 Business problem definition
-
 Workflow design
-
 System architecture
-
 Data model design
-
 AI prompt specification
-
 Output-contract design
-
 Pipeline-state design
-
 Integration decisions
-
 Testing
-
 Debugging
-
 Failure analysis
-
-Iteration based on production behavior
-
+Production iteration
 Organic search strategy
 ```
 
@@ -733,17 +808,17 @@ Refactoring
 Documentation support
 ```
 
-The engineering value demonstrated by this project is therefore primarily in:
+The primary capabilities demonstrated by this project are:
 
 ```text
 Problem decomposition
-System orchestration
-AI-assisted implementation
-Operational automation
-Growth systems thinking
+Systems thinking
+AI orchestration
+Workflow automation
+Integration design
+Operational debugging
+Organic growth engineering
 ```
-
-rather than manual code authorship as an end in itself.
 
 ---
 
@@ -766,7 +841,7 @@ Google Apps Script
 AI
 └── OpenAI API
 
-Data / Storage
+Data & Storage
 ├── Google Sheets
 └── Google Drive
 
@@ -774,7 +849,7 @@ Commerce
 ├── WordPress
 └── WooCommerce
 
-SEO
+SEO & Measurement
 ├── Yoast SEO
 ├── Google Search Console
 └── Ahrefs
@@ -787,18 +862,11 @@ SEO
 ```text
 bbk-organic-growth-engine/
 │
-├── src/
-│   │
-│   ├── python/
-│   │   ├── telethon_fetch.py
-│   │   ├── telegram_parser.py
-│   │   └── clean_files.py
-│   │
-│   └── apps-script/
-│       ├── normalizeAndBuildMaster.gs
-│       ├── syncDrivePhotosToMaster.gs
-│       ├── publishMasterToWooCommerce.gs
-│       └── handleStockStatusChange.gs
+├── README.md
+├── .gitignore
+│
+├── diagrams/
+│   └── system-architecture.md
 │
 ├── docs/
 │   │
@@ -808,23 +876,35 @@ bbk-organic-growth-engine/
 │   │   ├── ADR-003-batch-throttling-and-resource-aware-automation.md
 │   │   └── ADR-004-ai-output-contract-and-controlled-generation.md
 │   │
-│   └── data-dictionary.md
+│   ├── evidence/
+│   │   ├── README.md
+│   │   ├── gsc-performance-12-months.png
+│   │   └── sitemaps_separated_by_file.md
+│   │
+│   └── workflows/
+│       └── data-dictionary.md
 │
-├── evidence/
-│   ├── product-sitemap.md
-│   ├── product-sitemap2.md
-│   └── product-sitemap3.md
-│
-└── README.md
+└── src/
+    │
+    ├── apps-script/
+    │   ├── handleStockStatusChange.gs
+    │   ├── normalizeAndBuildMaster.gs
+    │   ├── publishMasterToWooCommerce.gs
+    │   └── syncDrivePhotosToMaster.gs
+    │
+    └── python/
+        ├── clean_files.py
+        ├── telegram_parser_to_gsheet.py
+        └── telethon_fetch.py
 ```
 
 ---
 
-# Security and Public Repository Sanitization
+# Security & Repository Sanitization
 
-Production credentials are intentionally excluded.
+Production credentials and private supplier information are intentionally excluded from the public repository.
 
-The public repository must not contain:
+The repository must not contain:
 
 ```text
 OpenAI API keys
@@ -835,14 +915,11 @@ WooCommerce consumer keys
 WooCommerce consumer secrets
 Private supplier identities
 Private Telegram group IDs
+Private Telegram group URLs
 Production Google Drive folder IDs
 ```
 
-Google Apps Script secrets are retrieved through:
-
-```javascript
-PropertiesService.getScriptProperties()
-```
+Google Apps Script secrets are retrieved through Script Properties.
 
 Example:
 
@@ -854,49 +931,59 @@ const consumerKey = props.getProperty("WOO_CK");
 const consumerSecret = props.getProperty("WOO_CS");
 ```
 
-Local credential files should remain excluded through `.gitignore`.
+Local credential and session files should remain excluded through `.gitignore`.
 
 ---
 
 # What This Project Demonstrates
 
-This repository is intended as a case study in building an operational growth system around a real business constraint.
+BBKitchen is not presented as a generic coding exercise.
 
-It demonstrates the ability to connect:
+It is a case study in turning a real operational constraint into an automated organic growth system.
 
 ```text
-Messy real-world data
-        ↓
-Data ingestion
-        ↓
-Structured operational storage
-        ↓
-Controlled AI transformation
-        ↓
-Media automation
-        ↓
-API integration
-        ↓
-E-commerce publishing
-        ↓
-Technical SEO
-        ↓
-Organic acquisition
+Messy Real-World Data
+        |
+        v
+Data Ingestion
+        |
+        v
+Structured Operational Storage
+        |
+        v
+Controlled AI Transformation
+        |
+        v
+Media Automation
+        |
+        v
+API Integration
+        |
+        v
+E-Commerce Publishing
+        |
+        v
+Searchable Product Inventory
+        |
+        v
+Organic Acquisition
 ```
 
-The core principle behind the architecture is simple:
+The core architecture principle is:
 
-> Use deterministic automation for predictable operations, use AI for ambiguous semantic transformation, and keep business state observable and recoverable.
+> **Use deterministic automation for predictable operations, use AI for ambiguous semantic transformation, and keep business state observable and recoverable.**
 
 ---
 
 # Documentation
 
-Start here:
+### System
 
-[`Data Dictionary`](./docs/data-dictionary.md)
+[`System Architecture`](./diagrams/system-architecture.md)
 
-Architecture decisions:
+[`Data Dictionary`](./docs/workflows/data-dictionary.md)
+
+### Architecture Decisions
 
 [`ADR-001 — Central Operational Database`](./docs/architecture/ADR-001-google-sheets-as-central-database.md)
 
@@ -905,3 +992,19 @@ Architecture decisions:
 [`ADR-003 — Resource-Aware Batch Processing`](./docs/architecture/ADR-003-batch-throttling-and-resource-aware-automation.md)
 
 [`ADR-004 — Controlled AI Generation`](./docs/architecture/ADR-004-ai-output-contract-and-controlled-generation.md)
+
+### Production Evidence
+
+[`Evidence Overview`](./docs/evidence/README.md)
+
+[`Production Sitemap Evidence`](./docs/evidence/sitemaps_separated_by_file.md)
+
+[`Google Search Console — 12 Month Performance`](./docs/evidence/gsc-performance-12-months.png)
+
+---
+
+## Disclaimer
+
+This repository is a sanitized public representation of a production business workflow.
+
+Sensitive credentials, supplier identities, private source access, and selected production configuration are intentionally excluded.
