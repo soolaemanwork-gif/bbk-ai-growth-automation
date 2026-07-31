@@ -25,7 +25,7 @@ Claims that cannot be independently supported are either described as partially 
 
 The production WooCommerce catalog is documented across multiple product sitemap records consolidated in:
 
-- [`sitemaps_separated_by_file.md`](docs/evidence/sitemaps_separated_by_file.md)
+- [`sitemaps_separated_by_file.md`](./sitemaps_separated_by_file.md)
 
 The sitemap records provide production evidence of the scale of the live e-commerce catalog.
 
