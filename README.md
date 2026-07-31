@@ -21,3 +21,28 @@ This created several operational problems:
 - Competition for the same inventory among multiple independent marketers
 
 Instead of manually processing each product, I began building a system that could turn these fragmented inventory feeds into a structured data pipeline.
+
+## System Architecture
+
+The system converts fragmented inventory feeds into structured e-commerce data through a staged pipeline.
+
+```mermaid
+flowchart LR
+    A["8 Telegram<br/>Inventory Groups"]
+    B["Python<br/>Data Ingestion"]
+    C["RAW_INVENTORY<br/>Google Sheets"]
+    D["AI Normalization<br/>OpenAI API"]
+    E["MASTER_INVENTORY<br/>Google Sheets"]
+    F["Google Drive<br/>Media Sync"]
+    G["WooCommerce<br/>REST API"]
+    H["Product Pages"]
+    I["Google Search"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    F --> E
+    E --> G
+    G --> H
+    H --> I
