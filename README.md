@@ -70,3 +70,31 @@ Eligible products are published in controlled batches through the WooCommerce RE
 
 **7. Organic Discovery**  
 Published products become part of the site's searchable and indexable content infrastructure.
+
+## AI-Assisted Normalization
+
+Raw inventory data is not reliable enough to publish directly. Product captions from different sources vary in naming conventions, specifications, formatting, and completeness.
+
+To standardize this data, I designed an AI-assisted normalization layer between `RAW_INVENTORY` and `MASTER_INVENTORY`.
+
+### How It Works
+
+1. Google Apps Script reads unprocessed records from `RAW_INVENTORY`.
+2. Raw product data is sent to the OpenAI API with predefined normalization rules.
+3. The model is required to return a structured JSON response rather than free-form text.
+4. The response is parsed and validated before being written to `MASTER_INVENTORY`.
+5. Products are processed in controlled batches to stay within execution and API constraints.
+
+### Output Contract
+
+The AI layer produces structured fields such as:
+
+```json
+{
+  "product_title": "...",
+  "category": "...",
+  "specifications": "...",
+  "seo_keyword": "...",
+  "meta_description": "...",
+  "full_description": "..."
+}
