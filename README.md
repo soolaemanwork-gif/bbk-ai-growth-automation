@@ -98,6 +98,7 @@ The AI layer produces structured fields such as:
   "meta_description": "...",
   "full_description": "..."
 }
+
 ## Engineering Decisions
 
 The system was designed around operational reliability rather than maximum processing speed.
