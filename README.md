@@ -89,6 +89,10 @@ To standardize this data, I designed an AI-assisted normalization layer between 
 
 The AI layer produces structured fields such as:
 
+### Output Contract
+
+The AI layer produces structured fields such as:
+
 ```json
 {
   "product_title": "...",
@@ -98,7 +102,7 @@ The AI layer produces structured fields such as:
   "meta_description": "...",
   "full_description": "..."
 }
-...
+```
 
 ## Engineering Decisions
 
