@@ -23,13 +23,11 @@ Claims that cannot be independently supported are either described as partially 
 
 ## Product Sitemap Scale
 
-The production WooCommerce catalog is distributed across multiple product sitemap files:
+The production WooCommerce catalog is documented across multiple product sitemap records consolidated in:
 
-- [`product-sitemap.xml`](./product-sitemap.xml)
-- [`product-sitemap2.xml`](./product-sitemap2.xml)
-- [`product-sitemap3.xml`](./product-sitemap3.xml)
+- [`sitemaps_separated_by_file.md`](docs/evidence/sitemaps_separated_by_file.md)
 
-Together, these sitemap files provide production evidence of the scale of the live e-commerce catalog.
+The sitemap records provide production evidence of the scale of the live e-commerce catalog.
 
 **What this evidence supports:**
 
@@ -37,4 +35,4 @@ Together, these sitemap files provide production evidence of the scale of the li
 - Thousands of product URLs exposed through the production sitemap infrastructure
 - Production implementation beyond a prototype environment
 
-The sitemap files demonstrate the scale of the live catalog. They do not, by themselves, prove that every listed product was published through the automation pipeline.
+The sitemap evidence demonstrates the scale of the live catalog. It does not, by itself, prove that every listed product was published through the automation pipeline or indexed by Google.
