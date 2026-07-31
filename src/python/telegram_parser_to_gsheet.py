@@ -9,18 +9,19 @@ from zoneinfo import ZoneInfo
 import gspread
 from google.oauth2.service_account import Credentials
 from PIL import Image
-from requests.exceptions import ReadTimeout  # Ditambahkan untuk menangkap error timeout jaringan
+from requests.exceptions import ReadTimeout  # Handles network timeout errors
 from tqdm import tqdm
 
 # =========================================================
-# KONFIGURASI (Jalur Langsung ke Folder Master)
+# CONFIGURATION
+# Production paths and source identifiers are anonymized.
 # =========================================================
-BASE_DIR = Path(r"G:\My Drive\Automation")
+BASE_DIR = Path("./data")
 EXPORT_ROOT = BASE_DIR / "exports"
 
-# Mengarahkan langsung ke folder utama
-OUTPUT_DIR = Path(r"G:\My Drive\BBK_WEBP_MASTER")
-IMG_DIR = OUTPUT_DIR 
+# Master directory for processed product images
+OUTPUT_DIR = BASE_DIR / "webp_master"
+IMG_DIR = OUTPUT_DIR
 
 LOGO_FILE = BASE_DIR / "logo.png"
 LOGO_SIZE_PERCENT = 0.50
@@ -38,30 +39,32 @@ WORKSHEET_NAME = "RAW_INVENTORY"
 
 LOCAL_TZ = ZoneInfo("Asia/Jakarta")
 
+# Warehouse names and locations are anonymized for the public repository.
 WAREHOUSE_MAP = {
-    "GK": "PAMULANG 2, TANGSEL", "BB": "PAMULANG 2, TANGSEL",
-    "SM": "PAMULANG 2, TANGSEL", "BL": "PAMULANG 2, TANGSEL",
-    "ML": "PAMULANG BARAT, TANGSEL", "PY": "SETU, TANGSEL",
-    "PE": "SAWANGAN, DEPOK", "WT": "KEDAUNG, TANGSEL",
-    "ON": "KEDAUNG, TANGSEL", "RB": "PAMULANG BARAT, TANGSEL",
+    "SOURCE_01": "WAREHOUSE_A", "SOURCE_02": "WAREHOUSE_A",
+    "SOURCE_03": "WAREHOUSE_A", "SOURCE_04": "WAREHOUSE_A",
+    "SOURCE_05": "WAREHOUSE_B", "SOURCE_06": "WAREHOUSE_C",
+    "SOURCE_07": "WAREHOUSE_D", "SOURCE_08": "WAREHOUSE_E",
+    "SOURCE_09": "WAREHOUSE_E", "SOURCE_10": "WAREHOUSE_B",
 }
 
+# Private Telegram group URLs are intentionally excluded.
 SOURCE_MAP = {
-    "GK": "https://t.me/c/2479885293", "BB": "https://t.me/c/1947492349",
-    "SM": "https://t.me/c/2249769366", "BL": "https://t.me/c/2221612633",
-    "ML": "https://t.me/c/2295735681", "PY": "https://t.me/c/2556966592",
-    "PE": "https://t.me/c/2471308578", "WT": "https://t.me/c/2559367434",
-    "ON": "https://t.me/c/3420173563", "RB": "https://t.me/c/2405866006",
+    "SOURCE_01": "TELEGRAM_SOURCE_URL_01", "SOURCE_02": "TELEGRAM_SOURCE_URL_02",
+    "SOURCE_03": "TELEGRAM_SOURCE_URL_03", "SOURCE_04": "TELEGRAM_SOURCE_URL_04",
+    "SOURCE_05": "TELEGRAM_SOURCE_URL_05", "SOURCE_06": "TELEGRAM_SOURCE_URL_06",
+    "SOURCE_07": "TELEGRAM_SOURCE_URL_07", "SOURCE_08": "TELEGRAM_SOURCE_URL_08",
+    "SOURCE_09": "TELEGRAM_SOURCE_URL_09", "SOURCE_10": "TELEGRAM_SOURCE_URL_10",
 }
 
-# --- Fungsi utama untuk koneksi dan pemrosesan ---
+# --- Core connection and processing functions ---
 def connect_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=scopes)
     client = gspread.authorize(creds)
     
-    # Set timeout global gspread menjadi 60 detik agar koneksi tidak gampang putus
-    client.timeout = 60 
+    # Increase the global gspread timeout to reduce connection failures
+    client.timeout = 60
     
     return client.open(SPREADSHEET_NAME).worksheet(WORKSHEET_NAME)
 
@@ -85,15 +88,15 @@ def resize_and_compress_webp(src, dest):
             img_rgba.paste(logo, (x, y), logo)
             img = img_rgba.convert("RGB")
         img.save(dest, "WEBP", quality=WEBP_QUALITY, optimize=True, method=6)
-    except Exception as e: print(f"Gagal proses {src}: {e}")
+    except Exception as e: print(f"Failed to process {src}: {e}")
 
-def process_photos(kode, photo_paths):
+def process_photos(unit_code, photo_paths):
     links, cleaned, seen = [], [], set()
     for p in photo_paths:
         if str(p) not in seen:
             seen.add(str(p)); cleaned.append(p)
-    for i, src in enumerate(tqdm(cleaned[:MAX_PHOTOS], desc=f"Photos {kode}", leave=False), start=1):
-        filename = f"{kode}_{i}.webp"
+    for i, src in enumerate(tqdm(cleaned[:MAX_PHOTOS], desc=f"Photos {unit_code}", leave=False), start=1):
+        filename = f"{unit_code}_{i}.webp"
         resize_and_compress_webp(src, IMG_DIR / filename)
         links.append(f"{PHOTO_URL_PREFIX}{filename}")
     return links
@@ -131,7 +134,7 @@ def extract_units(src_code, base_url):
             units.append({
                 "link": f"{base_url}/{cap_msg['id']}",
                 "caption": caption,
-                "tanggal": datetime.fromtimestamp(int(cap_msg["date_unixtime"]), tz=timezone.utc).astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": datetime.fromtimestamp(int(cap_msg["date_unixtime"]), tz=timezone.utc).astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
                 "photos": photos,
                 "src": src_code
             })
@@ -139,38 +142,38 @@ def extract_units(src_code, base_url):
 
 def main():
     IMG_DIR.mkdir(parents=True, exist_ok=True)
-    print("\nConnecting Google Sheet...")
+    print("\nConnecting to Google Sheets...")
     sheet = connect_sheet()
     headers = sheet.row_values(1)
     all_rows = sheet.get_all_values()[1:]
     
     link_idx = headers.index("LINK_MESSAGE")
-    kode_idx = headers.index("KODE_UNIT")
+    code_idx = headers.index("KODE_UNIT")
     
     existing_links = {r[link_idx] for r in all_rows if len(r) > link_idx and r[link_idx]}
-    nums = [int(r[kode_idx][3:]) for r in all_rows if len(r) > kode_idx and r[kode_idx].startswith("BBK")]
+    nums = [int(r[code_idx][3:]) for r in all_rows if len(r) > code_idx and r[code_idx].startswith("BBK")]
     next_idx = max(nums) + 1 if nums else 1
 
     print("Scanning Telegram exports...\n")
     all_units = [u for src, base_url in SOURCE_MAP.items() for u in extract_units(src, base_url) if u["link"] not in existing_links]
-    print(f"Total unit baru: {len(all_units)}\n")
+    print(f"Total new inventory units: {len(all_units)}\n")
 
     rows_to_append = []
     for u in tqdm(all_units, desc="Processing Units"):
-        kode = f"BBK{next_idx:04d}"
+        unit_code = f"BBK{next_idx:04d}"
         next_idx += 1
-        photo_data = process_photos(kode, u["photos"])
+        photo_data = process_photos(unit_code, u["photos"])
         
         row_dict = {
-            "KODE_UNIT": kode,
+            "KODE_UNIT": unit_code,
             "SOURCE_GROUP": u["src"],
             "LINK_MESSAGE": u["link"],
             "CAPTION_RAW": u["caption"],
             "PHOTO_URLS": "|".join(photo_data),
             "FETCH_DATE": datetime.now(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-            "LAST_SEEN_DATE": u["tanggal"],
-            "LOKASI_GUDANG": WAREHOUSE_MAP.get(u["src"], "Gudang Pusat"),
-            "STATUS_UNIT": "Tersedia",
+            "LAST_SEEN_DATE": u["timestamp"],
+            "LOKASI_GUDANG": WAREHOUSE_MAP.get(u["src"], "WAREHOUSE_UNKNOWN"),
+            "STATUS_UNIT": "Available",
             "IS_PROCESSED": "FALSE"
         }
         
@@ -178,43 +181,43 @@ def main():
         rows_to_append.append(row)
         existing_links.add(u["link"])
 
-    # --- BAGIAN UPLOAD: BATCHING PER 10 BARIS + RETRY MECHANISM ---
+    # --- UPLOAD: BATCHING 10 ROWS + RETRY MECHANISM ---
     if rows_to_append:
         chunk_size = 10
         total_rows = len(rows_to_append)
         max_attempts = 3
         
-        print(f"\nMemulai pengunggahan data (Total: {total_rows} baris, dibagi per {chunk_size} baris)...")
+        print(f"\nStarting data upload (Total: {total_rows} rows, {chunk_size} rows per batch)...")
         
         for i in range(0, total_rows, chunk_size):
             chunk = rows_to_append[i:i + chunk_size]
             success = False
             
-            # Loop retry untuk setiap batch individu jika terjadi gangguan sinyal/timeout
+            # Retry each individual batch if a network timeout or connection issue occurs
             for attempt in range(max_attempts):
                 try:
-                    print(f"Mengunggah baris ke-{i+1} sampai {min(i+chunk_size, total_rows)} (Percobaan {attempt + 1})...")
+                    print(f"Uploading rows {i+1} to {min(i+chunk_size, total_rows)} (Attempt {attempt + 1})...")
                     sheet.append_rows(chunk, value_input_option="USER_ENTERED")
                     success = True
-                    break  # Sukses, keluar dari loop retry untuk batch berjalan
+                    break  # Upload succeeded; continue to the next batch
                 except (ReadTimeout, Exception) as e:
-                    print(f"   [!] Gagal mengunggah batch ini karena: {e}")
+                    print(f"   [!] Batch upload failed: {e}")
                     if attempt < max_attempts - 1:
-                        print("   Menunggu 5 detik sebelum mencoba lagi...")
+                        print("   Waiting 5 seconds before retrying...")
                         time.sleep(5)
                     else:
-                        print("\n[ERROR] Gagal mengunggah setelah 3 kali percobaan pada batch ini.")
+                        print("\n[ERROR] Batch upload failed after 3 attempts.")
                         raise e
             
             if success:
-                # Beri jeda 1 detik antar batch untuk mencegah menyentuh limits kuota Google API
+                # Add a short delay between batches to reduce Google API quota pressure
                 time.sleep(1)
                 
-        print(f"\nBerhasil menulis total {total_rows} unit baru ke Google Sheets.")
+        print(f"\nSuccessfully uploaded {total_rows} new inventory units to Google Sheets.")
     else:
-        print("\nTidak ada data baru untuk diunggah.")
+        print("\nNo new inventory data to upload.")
     
-    print("\nSelesai semua.")
+    print("\nPipeline completed.")
 
 if __name__ == "__main__":
     main()
