@@ -133,3 +133,41 @@ The objective is not instant bulk processing, but a pipeline that can operate re
 The staged architecture separates ingestion, normalization, media synchronization, and publishing.
 
 A failure in one stage therefore does not require the entire inventory pipeline to be restarted from the beginning.
+
+## Verified Scale & Results
+
+The system has been used on a live commercial kitchen equipment operation rather than as a standalone technical demo.
+
+| Metric | Result |
+|---|---:|
+| Inventory managed | 2,333 SKUs |
+| Product URLs in sitemap | 2,000 |
+| Geographic targets | 183 districts |
+| Google Search impressions | 24,307 |
+| Organic clicks | 883 |
+| Ahrefs Health Score | 67 |
+
+> Search performance represents Google Search Console data from Indonesia over a 12-month period.
+
+### Operational Scale
+
+The pipeline was designed to manage a continuously changing inventory rather than a static product catalog.
+
+Products originate from multiple independent warehouse sources, meaning availability, descriptions, images, specifications, and sold status can change independently.
+
+The automation reduces the amount of repetitive work required to transform this fragmented inventory into structured product data and publishable web content.
+
+### Organic Growth Infrastructure
+
+Beyond individual product listings, the project includes a geo-aware SEO structure targeting **183 districts across Greater Jakarta**.
+
+This combines:
+
+- Product-level search demand
+- Location-based search intent
+- Structured internal linking
+- On-page SEO
+- Search-oriented content architecture
+- Technical indexation monitoring
+
+The resulting infrastructure connects inventory operations with organic search acquisition rather than treating SEO as a separate content activity.
