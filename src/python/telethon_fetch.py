@@ -16,27 +16,29 @@ from config_telethon import (
     SESSION_NAME
 )
 
-# ================= CONFIG (Jalur Disesuaikan) =================
+# ================= CONFIGURATION =================
+# Production paths and Telegram source IDs are anonymized
+# for this public repository.
 
-BASE_DIR = Path(r"G:\My Drive\Automation")
+BASE_DIR = Path("./data")
 EXPORT_ROOT = BASE_DIR / "exports"
 
 LOCAL_TZ = ZoneInfo("Asia/Jakarta")
 
 SOURCE_MAP = {
-    "GK": -1002479885293,
-    "BB": -1001947492349,
-    "SM": -1002249769366,
-    "BL": -1002221612633,
-    "ML": -1002295735681,
-    "PY": -1002556966592,
-    "PE": -1002471308578,
-    "WT": -1002559367434,
-    "ON": -1003420173563,
-    "RB": -1002405866006,
+    "SOURCE_01": -1000000000001,
+    "SOURCE_02": -1000000000002,
+    "SOURCE_03": -1000000000003,
+    "SOURCE_04": -1000000000004,
+    "SOURCE_05": -1000000000005,
+    "SOURCE_06": -1000000000006,
+    "SOURCE_07": -1000000000007,
+    "SOURCE_08": -1000000000008,
+    "SOURCE_09": -1000000000009,
+    "SOURCE_10": -1000000000010,
 }
 
-# ================= ARGUMENT =================
+# ================= ARGUMENTS =================
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--date", help="YYYY-MM-DD")
@@ -44,7 +46,7 @@ parser.add_argument("--start", help="YYYY-MM-DD")
 parser.add_argument("--end", help="YYYY-MM-DD")
 args = parser.parse_args()
 
-# ================= DATE =================
+# ================= DATE RANGE =================
 
 def parse_local(dt_str):
     dt = datetime.fromisoformat(dt_str)
@@ -64,7 +66,7 @@ else:
 START_DATE = start_local.astimezone(timezone.utc)
 END_DATE = end_local.astimezone(timezone.utc)
 
-print(f"WIB: {start_local} -> {end_local}")
+print(f"Local time range: {start_local} -> {end_local}")
 
 # ================= TELETHON =================
 
@@ -105,7 +107,7 @@ async def fetch_group(src_code, chat_id):
     with open(out_dir / "result.json", "w", encoding="utf-8") as f:
         json.dump({"messages": messages}, f, ensure_ascii=False, indent=2)
 
-    print(f"[{src_code}] Berhasil mengambil {len(messages)} pesan bergambar.")
+    print(f"[{src_code}] Successfully fetched {len(messages)} messages with images.")
 
 # ================= MAIN =================
 
