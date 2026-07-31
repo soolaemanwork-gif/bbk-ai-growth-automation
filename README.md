@@ -2,6 +2,19 @@
 
 > A production workflow that transforms fragmented inventory from independent Telegram supplier groups into structured, SEO-ready WooCommerce product listings.
 
+## At a Glance
+
+| | |
+|---|---|
+| **Business** | BBKitchen (Bukan Baru Kitchen) — bukanbarukitchen.com |
+| **Problem** | Fragmented inventory from multiple independent Telegram supplier groups |
+| **Solution** | Automated Telegram → Python → Google Sheets → AI → WooCommerce pipeline |
+| **Inventory Scale** | 2,333 SKUs |
+| **Organic Performance** | 24,307 impressions & 883 clicks / 12 months |
+| **SEO Scale** | Thousands of product URLs + 183 geographic targets |
+| **Core Stack** | Python, Google Apps Script, OpenAI API, Google Sheets, WooCommerce |
+| **My Role** | System architecture, AI orchestration, workflow automation, testing & growth strategy |
+
 ## Project Overview
 
 **BBKitchen (Bukan Baru Kitchen)** is a used commercial kitchen equipment business operating through **bukanbarukitchen.com**.
