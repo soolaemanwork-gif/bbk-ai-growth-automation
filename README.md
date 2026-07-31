@@ -46,3 +46,27 @@ flowchart LR
     E --> G
     G --> H
     H --> I
+```
+
+### Pipeline
+
+**1. Inventory Ingestion**  
+Python scripts collect product information and media references from multiple Telegram inventory groups.
+
+**2. Raw Staging**  
+Incoming data is stored in `RAW_INVENTORY`, preserving the source data before transformation.
+
+**3. AI-Assisted Normalization**  
+Google Apps Script sends raw product data to the OpenAI API using structured prompting rules. The model returns standardized product information in a predefined JSON format.
+
+**4. Master Inventory**  
+Validated output is written to `MASTER_INVENTORY`, which acts as the operational source of truth for publishing.
+
+**5. Media Synchronization**  
+Product images stored in Google Drive are mapped back to inventory records using product identifiers.
+
+**6. WooCommerce Publishing**  
+Eligible products are published in controlled batches through the WooCommerce REST API.
+
+**7. Organic Discovery**  
+Published products become part of the site's searchable and indexable content infrastructure.
