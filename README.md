@@ -98,3 +98,38 @@ The AI layer produces structured fields such as:
   "meta_description": "...",
   "full_description": "..."
 }
+## Engineering Decisions
+
+The system was designed around operational reliability rather than maximum processing speed.
+
+### Raw vs. Master Data
+
+Inventory data is separated into two layers:
+
+- `RAW_INVENTORY` preserves incoming source data before transformation.
+- `MASTER_INVENTORY` contains normalized and validated records used by downstream processes.
+
+This separation allows the original source data to remain traceable while preventing incomplete or malformed records from being published directly.
+
+### Change Detection
+
+The workflow uses `HASH_DATA` and `IS_DIRTY` fields to identify records that have changed.
+
+Instead of repeatedly processing every product, downstream operations can focus on records that require synchronization or republishing.
+
+### Resource-Aware Batch Processing
+
+The pipeline intentionally processes data in controlled batches:
+
+- AI normalization: up to **10 products per execution**
+- WooCommerce publishing: up to **5 products per execution**
+
+These limits were introduced after considering Google Apps Script execution constraints, API usage, and WooCommerce server stability.
+
+The objective is not instant bulk processing, but a pipeline that can operate repeatedly and predictably as inventory volume grows.
+
+### Failure Isolation
+
+The staged architecture separates ingestion, normalization, media synchronization, and publishing.
+
+A failure in one stage therefore does not require the entire inventory pipeline to be restarted from the beginning.
